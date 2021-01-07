@@ -29,7 +29,7 @@ pipeline {
             }
 
             steps {
-                sh "docker build --build-arg 'VERSION=${params.VERSION}' -t rafaelostertag/lastseen-service:${params.VERSION} docker"
+                sh "docker build --build-arg 'VERSION=${params.VERSION}' -t rafaelostertag/lastseen-service:${params.VERSION} ."
                 withCredentials([usernamePassword(credentialsId: '750504ce-6f4f-4252-9b2b-5814bd561430', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     sh 'docker login --username "$USERNAME" --password "$PASSWORD"'
                     sh "docker push rafaelostertag/lastseen-service:${params.VERSION}"
