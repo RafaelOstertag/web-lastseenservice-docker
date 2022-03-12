@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label "arm64&&docker"
+        label "amd64&&docker"
     }
 
     triggers {
@@ -28,12 +28,35 @@ pipeline {
                 }
             }
 
-            steps {
-                sh "docker build --build-arg 'VERSION=${params.VERSION}' -t rafaelostertag/lastseen-service:${params.VERSION} ."
-                withCredentials([usernamePassword(credentialsId: '750504ce-6f4f-4252-9b2b-5814bd561430', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    sh 'docker login --username "$USERNAME" --password "$PASSWORD"'
-                    sh "docker push rafaelostertag/lastseen-service:${params.VERSION}"
+            parallel {
+                stage('AMD64') {
+                    steps {
+                        buildAndPush()
+                    }
                 }
+
+                stage('ARM64') {
+                    agent {
+                        label "arm64&&docker"
+                    }
+
+                    steps {
+                        buildAndPush()
+                    }
+                }
+            }
+        }
+
+        stage('Multi-Arch Image') {
+            when {
+                allOf {
+                    expression { return params.VERSION != 'none' }
+                    expression { return params.VERSION != '' }
+                }
+            }
+
+            steps {
+                multiArchImage()
             }
         }
 
@@ -58,5 +81,19 @@ pipeline {
                     subject: "${JOB_NAME} (${env.BUILD_DISPLAY_NAME}) -- ${currentBuild.currentResult}",
                     body: "Refer to ${currentBuild.absoluteUrl}"
         }
+    }
+}
+
+def buildAndPush() {
+    withCredentials([usernamePassword(credentialsId: '750504ce-6f4f-4252-9b2b-5814bd561430', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+        sh 'docker login --username "$USERNAME" --password "$PASSWORD"'
+        sh "./build.sh ${params.VERSION}"
+    }
+}
+
+def multiArchImage() {
+    withCredentials([usernamePassword(credentialsId: '750504ce-6f4f-4252-9b2b-5814bd561430', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+        sh 'docker login --username "$USERNAME" --password "$PASSWORD"'
+        sh "./multi-arch.sh ${params.VERSION}"
     }
 }
