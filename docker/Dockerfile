@@ -1,9 +1,15 @@
+FROM curlimages/curl:latest AS download
+ARG VERSION
+ARG REPOSITORY_USER
+ARG REPOSITORY_PASSWORD
+RUN curl -Lf -u "${REPOSITORY_USER}:${REPOSITORY_PASSWORD}"  -o /tmp/lastseenservice.jar https://rafaelostertag.jfrog.io/artifactory/maven/ch/guengel/webtools/lastseenservice/${VERSION}/lastseenservice-${VERSION}-jar-with-dependencies.jar
+
 FROM --platform=$BUILDPLATFORM ghcr.io/graalvm/graalvm-ce:ol8-java11-22 AS executable
 ARG BUILDPLATFORM
 ARG VERSION
 WORKDIR /tmp
 RUN gu install native-image
-ADD https://colossus.kruemel.home/nexus/repository/webtools-maven/ch/guengel/webtools/lastseenservice/$VERSION/lastseenservice-${VERSION}-jar-with-dependencies.jar lastseenservice.jar
+COPY --from=download /tmp/lastseenservice.jar /tmp/
 RUN native-image --verbose -jar lastseenservice.jar
 
 FROM --platform=$BUILDPLATFORM debian:11.2-slim AS runnable

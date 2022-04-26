@@ -8,6 +8,10 @@ then
   exit 1
 fi
 VERSION=$1
+if [ "${VERSION}" = "none" ]
+then
+  exit 0
+fi
 
 MACHINE=`uname -m`
 case "${MACHINE}" in
@@ -26,4 +30,10 @@ esac
 
 echo "### Building for ${PLATFORM}"
 
-docker buildx build --push --platform "${PLATFORM}" --build-arg VERSION="${VERSION}" -t "rafaelostertag/lastseen-service:${VERSION}-${VERSION_SUFFIX}" docker
+docker buildx build \
+  --push \
+  --platform "${PLATFORM}" \
+  --build-arg VERSION="${VERSION}" \
+  --build-arg REPOSITORY_USER="${REPO_USERNAME}" \
+  --build-arg REPOSITORY_PASSWORD="${REPO_PASSWORD}" \
+  -t "rafaelostertag/lastseen-service:${VERSION}-${VERSION_SUFFIX}" docker

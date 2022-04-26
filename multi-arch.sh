@@ -8,6 +8,10 @@ then
   exit 1
 fi
 VERSION=$1
+if [ "${VERSION}" = "none" ]
+then
+  exit 0
+fi
 
 IMAGE="rafaelostertag/lastseen-service"
 IMAGE_VERSIONED="${IMAGE}:${VERSION}"
